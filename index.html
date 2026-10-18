@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AEventh Studio</title>
+<meta name="description" content="AEventh Studio is an independent game studio. Currently developing Æventh: Survival.">
+<link rel="icon" type="image/png" href="/assets/aeventh_mark_v2.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@500;700&family=Silkscreen&display=swap">
+<style>
+:root {
+  --void: #050505; --line: #2b2b2b; --dim: #8f8f8a; --light: #f4f4ef;
+  --font-display: "Pixelify Sans", "Silkscreen", ui-monospace, monospace;
+  --font-label: "Silkscreen", ui-monospace, "SFMono-Regular", monospace;
+  --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--void); }
+body { margin: 0; color: var(--light); font: 17px/1.6 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+a { color: var(--light); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--light); outline-offset: 3px; }
+.wrap { max-width: 1040px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+.top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-block: 18px; border-bottom: 1px solid var(--line); }
+.studio { display: flex; align-items: center; gap: 10px; font: 13px var(--font-label); letter-spacing: .06em; text-decoration: none; }
+.studio img { width: 32px; height: 32px; }
+.lang { display: flex; border: 1px solid var(--line); margin-left: auto; }
+.lang button { all: unset; cursor: pointer; padding: 4px 8px; font: 12px var(--font-label); color: var(--dim); }
+.lang button[aria-pressed="true"] { background: var(--light); color: var(--void); }
+main { flex: 1; padding-block: 64px 48px; display: grid; gap: 56px; align-content: start; }
+.hero img { width: 96px; height: 96px; }
+h1 { font: 700 clamp(40px, 8vw, 80px)/1 var(--font-display); margin: 20px 0 16px; }
+.lede { font-size: clamp(18px, 2.2vw, 21px); max-width: 40ch; margin: 0; color: var(--light); }
+.label { font: 12px var(--font-label); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 14px; }
+.game { border: 2px solid var(--light); padding: 22px; display: grid; gap: 10px; max-width: 560px; }
+.game h2 { font: 700 28px/1.1 var(--font-display); margin: 0; }
+.game p { margin: 0; color: var(--dim); }
+.chip { font: 11px var(--font-label); letter-spacing: .08em; border: 1px solid var(--light); padding: 2px 8px; justify-self: start; }
+.links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+.btn { font: 12px var(--font-label); letter-spacing: .06em; padding: 10px 14px; border: 2px solid var(--light); text-decoration: none; }
+.mail { user-select: all; }
+footer { border-top: 1px solid var(--line); padding-block: 24px 36px; display: flex; gap: 12px 24px; flex-wrap: wrap; font: 12px var(--font-label); color: var(--dim); }
+footer .ver { margin-left: auto; border: 1px solid var(--line); padding: 2px 8px; color: var(--light); }
+@media (max-width: 600px) { footer .ver { margin-left: 0; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="studio" href="/"><img alt="" src="/assets/aeventh_mark_v2.png">AEventh Studio</a>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="de" aria-pressed="false">DE</button>
+    </div>
+  </header>
+  <main>
+    <div class="hero">
+      <img alt="AEventh Studio logo" src="/assets/aeventh_mark_v2.png">
+      <h1>AEventh Studio</h1>
+      <p class="lede" data-i18n="lede">An independent game studio. We make quiet, precise games in black and white.</p>
+    </div>
+    <section aria-labelledby="h-games">
+      <p class="label" id="h-games" data-i18n="games">Games</p>
+      <article class="game">
+        <span class="chip" data-i18n="status">In development</span>
+        <h2>Æventh: Survival</h2>
+        <p data-i18n="survival">A grid-based Metroidvania without combat. You slide until something stops you.</p>
+        <div class="links"><a class="btn" href="/survival/tools/">Survival Tools</a></div>
+      </article>
+    </section>
+    <section>
+      <p class="label" data-i18n="contact">Contact</p>
+      <p style="margin:0"><span class="mail">contact@aeventhstudio.com</span></p>
+    </section>
+  </main>
+  <footer>
+    <span>© 2026 AEventh Studio</span>
+    <span data-i18n="imprint">Imprint follows</span>
+    <span class="ver">V0.1.0</span>
+  </footer>
+</div>
+<script>
+(function () {
+  var DE = { lede: "Ein unabhängiges Spielestudio. Wir machen ruhige, präzise Spiele in Schwarz und Weiß.", games: "Spiele", status: "In Entwicklung",
+    survival: "Ein rasterbasiertes Metroidvania ohne Kampf. Du gleitest, bis dich etwas aufhält.", contact: "Kontakt", imprint: "Impressum folgt" };
+  var nodes = document.querySelectorAll("[data-i18n]"), EN = {};
+  nodes.forEach(function (n) { EN[n.getAttribute("data-i18n")] = n.textContent; });
+  function apply(l) { var d = l === "de" ? DE : EN;
+    nodes.forEach(function (n) { var k = n.getAttribute("data-i18n"); if (d[k]) n.textContent = d[k]; });
+    document.documentElement.lang = l;
+    document.querySelectorAll(".lang button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.lang === l)); });
+    try { localStorage.setItem("aeventh_lang", l); } catch (e) {} }
+  var s = null; try { s = localStorage.getItem("aeventh_lang"); } catch (e) {}
+  var nav = (navigator.languages || [navigator.language || "en"]).join(",").toLowerCase();
+  apply(s || (/^de|,de/.test(nav) ? "de" : "en"));
+  document.querySelectorAll(".lang button").forEach(function (b) { b.addEventListener("click", function () { apply(b.dataset.lang); }); });
+})();
+</script>
+</body>
+</html>
