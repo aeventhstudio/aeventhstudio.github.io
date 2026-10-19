@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Æventh: Survival</title>
+<meta name="description" content="Down here, the only light is you. A Metroidvania without combat by AEventh Studio.">
+<meta property="og:title" content="Æventh: Survival">
+<meta property="og:description" content="Down here, the only light is you. A Metroidvania without combat by AEventh Studio.">
+<meta property="og:image" content="https://aeventhstudio.com/survival/assets/img/room_002.png">
+<link rel="icon" type="image/png" href="assets/img/aeventh_mark_v2.png">
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: the page is a Chaos Dungeon. A fixed canvas holds a world built from the game's own tiles,
+   hidden in darkness; the visitor's light reveals it. Content sits on black "plates" like in-game text,
+   one room per section, separated by girder floors. */
+@font-face { font-family: "Jersey 10"; src: url("assets/fonts/jersey-10-latin-400-normal.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Silkscreen"; src: url("assets/fonts/silkscreen-latin-400-normal.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("assets/fonts/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("assets/fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+:root {
+  --void: #000000;      /* darkness */
+  --floor: #080808;     /* the checker floor of every room */
+  --steel: #373737;     /* the game's only grey */
+  --dim: #9a9a96;       /* secondary text */
+  --light: #ffffff;     /* Lumen light */
+  --display: "Jersey 10", "Silkscreen", ui-monospace, monospace;
+  --label: "Silkscreen", ui-monospace, "SFMono-Regular", monospace;
+  --body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --px: 3px;            /* one game pixel on screen */
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--void); }
+body { margin: 0; background: var(--void); color: var(--light); font: 18px/1.6 var(--body); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+a { color: var(--light); }
+:focus-visible { outline: 2px dashed var(--light); outline-offset: 4px; }
+::selection { background: var(--light); color: var(--void); }
+
+#world, #fx { position: fixed; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; z-index: 0; pointer-events: none; }
+#fx { z-index: 4; }
+.wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* plates: text sits on black like in-game dialog, so the lit world never fights the words */
+.plate { background: var(--void); display: inline; box-decoration-break: clone; -webkit-box-decoration-break: clone; padding: .1em .35em; }
+.block { background: var(--void); padding: 22px 24px; }
+
+/* top bar */
+.top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-block: 16px; }
+.studio { display: flex; align-items: center; gap: 10px; background: var(--void); padding: 6px 10px 6px 6px; text-decoration: none; font: 12px var(--label); letter-spacing: .08em; }
+.studio img { width: 28px; height: 28px; }
+.top nav { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.top nav a, .lang button { background: var(--void); font: 12px var(--label); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); text-decoration: none; padding: 6px 10px; border: 0; cursor: pointer; }
+.top nav a:hover, .lang button[aria-pressed="true"] { color: var(--void); background: var(--light); }
+.lang { display: flex; flex-wrap: wrap; }
+
+/* rooms */
+.room { position: relative; padding-block: 64px; }
+.tag { font: 12px var(--label); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin: 0 0 14px; }
+.tag .plate { padding: .3em .5em; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; }
+h2 { font-size: clamp(40px, 6vw, 64px); line-height: .95; margin-bottom: 22px; }
+h2 .plate { padding: 0 .2em; }
+
+/* hero */
+.hero { min-height: min(86vh, 900px); display: grid; align-content: center; gap: 22px; padding-block: 40px 96px; }
+.hero h1 { font-size: clamp(76px, 15vw, 188px); line-height: .82; letter-spacing: -.01em; }
+.hero h1 .plate { padding: 0 .12em; }
+.hero h1 .sub { display: block; color: var(--light); }
+.hook { font: 400 clamp(26px, 3.6vw, 40px)/1.15 var(--display); margin: 6px 0 0; max-width: 30ch; }
+.lede { max-width: 54ch; margin: 0; color: var(--light); }
+.lede .plate { line-height: 1.9; }
+.ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 10px; font: 13px var(--label); letter-spacing: .08em; text-transform: uppercase; padding: 14px 18px; text-decoration: none; border: 3px solid var(--light); background: var(--void); color: var(--light); cursor: pointer; }
+.btn.primary { background: var(--light); color: var(--void); }
+.btn[aria-disabled="true"] { border-color: var(--steel); color: var(--dim); cursor: default; }
+.btn .soon { font-size: 10px; border: 1px solid currentColor; padding: 1px 5px; }
+.hint { font: 11px var(--label); letter-spacing: .1em; color: var(--dim); margin-top: 18px; }
+.hint .plate { padding: .4em .6em; }
+
+/* rules */
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
+.powers { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; font: 12px var(--label); letter-spacing: .06em; align-items: center; }
+.powers span { background: var(--void); border: 2px solid var(--steel); padding: 6px 10px; }
+.powers .lbl { border: 0; color: var(--dim); padding-left: 0; }
+.rule { background: var(--void); border: 3px solid var(--light); padding: 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.rule canvas { width: 100%; aspect-ratio: 2 / 1; image-rendering: pixelated; background: var(--floor); }
+.rule h3 { font-size: 34px; line-height: 1; }
+.rule p { margin: 0; color: var(--dim); font-size: 16px; }
+
+/* story: three sentences on black, nothing else */
+.story { max-width: 720px; display: grid; gap: 10px; }
+.story p { margin: 0; font-size: clamp(19px, 2.1vw, 23px); }
+.story p .plate { line-height: 1.75; }
+
+/* look */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 36px; align-items: center; }
+.screen { border: 3px solid var(--light); background: var(--void); padding: 8px; margin: 0; }
+.screen img { display: block; width: 100%; image-rendering: pixelated; }
+.screen figcaption { font: 11px var(--label); color: var(--dim); letter-spacing: .06em; padding-top: 8px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.specs { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 8px; font: 13px var(--label); letter-spacing: .04em; }
+.specs li .plate { padding: .3em .5em; }
+
+/* sound */
+.player { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: center; background: var(--void); border: 3px solid var(--light); padding: 18px; max-width: 760px; }
+.play { width: 72px; height: 72px; border: 3px solid var(--light); background: var(--light); color: var(--void); font: 28px var(--display); cursor: pointer; }
+.play[aria-pressed="true"] { background: var(--void); color: var(--light); }
+.track { display: grid; gap: 8px; min-width: 0; }
+.track b { font: 400 30px/1 var(--display); }
+.track small { font: 11px var(--label); color: var(--dim); letter-spacing: .06em; }
+#bars { width: 100%; height: 40px; image-rendering: pixelated; }
+
+/* makers */
+.makers { display: grid; grid-template-columns: repeat(2, minmax(0, 200px)) minmax(0, 1fr); gap: 20px; align-items: start; }
+.photo { aspect-ratio: 1; border: 3px solid var(--light); background:
+  repeating-conic-gradient(var(--steel) 0 25%, var(--void) 0 50%) 0 0 / 6px 6px; display: grid; place-items: end start; padding: 8px; font: 11px var(--label); }
+.photo span { background: var(--void); padding: 3px 6px; }
+.makers .block p { margin: 0 0 12px; }
+.sign { font: 400 28px var(--display); }
+.ph { color: var(--void); background: var(--light); padding: 0 .25em; font-family: var(--label); font-size: .78em; letter-spacing: .02em; }
+
+/* follow */
+.follow { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.mail { font: 14px var(--label); background: var(--void); padding: 12px 14px; border: 3px solid var(--steel); user-select: all; }
+
+footer { position: relative; z-index: 1; border-top: 3px solid var(--steel); background: var(--void); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 24px; padding-block: 22px 96px; font: 12px var(--label); color: var(--dim); letter-spacing: .04em; }
+footer .ver { margin-left: auto; border: 1px solid var(--steel); padding: 1px 8px; color: var(--light); }
+
+/* HUD */
+.hud { position: fixed; z-index: 5; left: calc(12px + env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 6px; align-items: stretch; font: 12px var(--label); letter-spacing: .06em; }
+.hud > * { background: var(--void); border: 2px solid var(--steel); color: var(--light); padding: 7px 10px; display: flex; align-items: center; gap: 8px; }
+.hud button { cursor: pointer; font: inherit; letter-spacing: inherit; text-transform: uppercase; }
+.hud button[aria-pressed="true"] { background: var(--light); color: var(--void); border-color: var(--light); }
+
+@media (max-width: 760px) {
+  :root { --px: 2px; }
+  .split, .makers { grid-template-columns: 1fr; }
+  .makers .photo { max-width: 200px; }
+  .player { grid-template-columns: 1fr; }
+  footer .ver { margin-left: 0; }
+  .hud { right: calc(12px + env(safe-area-inset-right, 0px)); flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<canvas id="world" aria-hidden="true"></canvas>
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <header class="top">
+    <a class="studio" href="/"><img src="assets/img/aeventh_mark_v2.png" alt="">AEventh Studio</a>
+    <nav aria-label="Main">
+      <a href="#rules" data-i18n="nav_game">The game</a>
+      <a href="#sound" data-i18n="nav_sound">Sound</a>
+      <a href="tools/">Tools</a>
+      <a href="#makers" data-i18n="nav_makers">Makers</a>
+      <span class="lang" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="de" aria-pressed="false">DE</button><button type="button" data-lang="ru" aria-pressed="false" lang="ru">RU</button><button type="button" data-lang="kk" aria-pressed="false" lang="kk">KZ</button></span>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="t">
+      <p class="tag" id="tr-note" hidden><span class="plate ph"></span></p>
+      <p class="tag"><span class="plate" data-i18n="eyebrow">AEventh Studio · PC · in development</span></p>
+      <h1 id="t"><span class="plate">Æventh:</span><span class="sub"><span class="plate">Survival</span></span></h1>
+      <p class="hook"><span class="plate" data-i18n="hook">You are the light of hope.</span></p>
+      <p class="lede"><span class="plate" data-i18n="lede">A Metroidvania without combat. As the nameless Lumen you slide through eight Chaos Dungeons, gather the fallen Lumen and survive the evils that have swallowed the world.</span></p>
+      <div class="ctas">
+        <span class="btn primary" aria-disabled="true"><span data-i18n="wishlist">Wishlist on Steam</span> <span class="soon" data-i18n="soon">soon</span></span>
+        <button class="btn" type="button" id="listen"><span aria-hidden="true">▶</span> <span data-i18n="listen">Listen to the soundtrack</span></button>
+      </div>
+      <p class="hint"><span class="plate" id="hint" data-i18n="hint">Move your light through the dark.</span></p>
+    </section>
+
+    <section class="room" id="rules" aria-labelledby="h-rules">
+      <p class="tag"><span class="plate" data-i18n="r1_tag">The game</span></p>
+      <h2 id="h-rules"><span class="plate" data-i18n="r1_h">Slide. Collect. Survive.</span></h2>
+      <div class="rules">
+        <article class="rule"><canvas width="96" height="48" data-demo="slide"></canvas><h3 data-i18n="p1_h">Slide</h3><p data-i18n="p1_t">Every move carries you on until a wall stops you. Every room is a puzzle of stopping points.</p></article>
+        <article class="rule"><canvas width="96" height="48" data-demo="lumen"></canvas><h3 data-i18n="p2_h">Gather the Lumen</h3><p data-i18n="p2_t">Fallen Lumen join you, each with an active and a passive power. Find their materials and evolve them.</p></article>
+        <article class="rule"><canvas width="96" height="48" data-demo="slots"></canvas><h3 data-i18n="p3_h">Choose your loadout</h3><p data-i18n="p3_t">You only have a few slots. Swap your Lumen when you rest at a light crystal, and choose where you can go and how long you last.</p></article>
+        <article class="rule"><canvas width="96" height="48" data-demo="explore"></canvas><h3 data-i18n="p4_h">Explore</h3><p data-i18n="p4_t">Interwoven Chaos Dungeons full of hidden paths, heart pieces and shortcuts. Knowledge is progress.</p></article>
+        <article class="rule"><canvas width="96" height="48" data-demo="survive"></canvas><h3 data-i18n="p5_h">Survival</h3><p data-i18n="p5_t">At the altars you face the evils themselves. Call the darkness, grab its essence and keep moving: in here your energy does not come back.</p></article>
+        <article class="rule"><canvas width="96" height="48" data-demo="hazard"></canvas><h3 data-i18n="p6_h">Never fight</h3><p data-i18n="p6_t">Sins and evils roam the dungeons, and you cannot strike them. Learn their patterns, then slip past.</p></article>
+      </div>
+      <p class="powers"><span class="lbl" data-i18n="powers">Lumen powers include</span><span data-i18n="pw1">Redirect</span><span data-i18n="pw2">Impulse</span><span data-i18n="pw3">Bombs</span><span data-i18n="pw4">Call of Light</span><span>…</span></p>
+    </section>
+
+    <section class="room" id="story" aria-labelledby="h-story">
+      <p class="tag"><span class="plate" data-i18n="r2_tag">The story</span></p>
+      <h2 id="h-story"><span class="plate" data-i18n="r2_h">The light of hope</span></h2>
+      <div class="story">
+        <p><span class="plate" data-i18n="s1">The evils of the world have broken free. Their darkness drains everything of its energy until fields, creatures and machines freeze.</span></p>
+        <p><span class="plate" data-i18n="s2">An old Lumen gave his life and became the Light Core. His spirit walks with you, the nameless Lumen.</span></p>
+        <p><span class="plate" data-i18n="s3">The fallen Lumen, the evils' bright counterparts, wait in the Chaos Dungeons. Find them, face what is waiting, and bring the light back.</span></p>
+      </div>
+    </section>
+
+    <section class="room" id="look" aria-labelledby="h-look">
+      <div class="split">
+        <div>
+          <p class="tag"><span class="plate" data-i18n="r3_tag">The look</span></p>
+          <h2 id="h-look"><span class="plate" data-i18n="r3_h">Black, white, exact</span></h2>
+          <p class="lede"><span class="plate" data-i18n="r3_p">Every room is drawn on a 16-pixel grid and scaled only in whole steps. Sharp on any screen, from a laptop to 4K.</span></p>
+          <ul class="specs">
+            <li><span class="plate">640 × 360 native</span></li>
+            <li><span class="plate">32 × 18 cells per screen</span></li>
+            <li><span class="plate" data-i18n="spec3">720p · 1080p · 1440p · 4K</span></li>
+          </ul>
+        </div>
+        <figure class="screen">
+          <img src="assets/img/room_002.png" width="320" height="180" alt="A room from the prototype: girders, crates and pipes in black and white pixel art" data-i18n-alt="shot_alt">
+          <figcaption><span data-i18n="shot_cap">Prototype room 002</span><span>Alpha 0.1.0</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="room" id="sound" aria-labelledby="h-sound">
+      <p class="tag"><span class="plate" data-i18n="r4_tag">The sound</span></p>
+      <h2 id="h-sound"><span class="plate" data-i18n="r4_h">Four channels, nothing more</span></h2>
+      <div class="player">
+        <button class="play" type="button" id="play" aria-pressed="false" aria-label="Play Exploration">▶</button>
+        <div class="track">
+          <b>Exploration</b>
+          <small data-i18n="track_meta">NES style · 2 pulse, triangle, noise · 152 BPM · E minor · 63 s loop</small>
+          <canvas id="bars" width="96" height="10" aria-hidden="true"></canvas>
+          <small data-i18n="composer">Composed by Alexander in FL Studio</small>
+        </div>
+      </div>
+      <audio id="music" preload="none" loop><source src="assets/audio/exploration_v1.mp3" type="audio/mpeg"></audio>
+    </section>
+
+    <section class="room" id="tools-room" aria-labelledby="h-tools">
+      <p class="tag"><span class="plate" data-i18n="r5_tag">The workshop</span></p>
+      <h2 id="h-tools"><span class="plate" data-i18n="r5_h">Build rooms with our own editor</span></h2>
+      <p class="lede"><span class="plate" data-i18n="r5_p">Æventh Survival Tools is the map and block editor we design every room with. It runs in your browser and works offline. Later it opens to the community for your own levels.</span></p>
+      <div class="ctas"><a class="btn" href="tools/" data-i18n="r5_cta">Open Survival Tools</a></div>
+    </section>
+
+    <section class="room" id="makers" aria-labelledby="h-makers">
+      <p class="tag"><span class="plate" data-i18n="r6_tag">The makers</span></p>
+      <h2 id="h-makers"><span class="plate" data-i18n="r6_h">Two people, one light</span></h2>
+      <div class="makers">
+        <div class="photo"><span>[Foto Alexander]</span></div>
+        <div class="photo"><span>[Foto Zarina]</span></div>
+        <div class="block">
+          <p data-i18n="m1">Hi, we're Alexander and Zarina.</p>
+          <p data-i18n="m2">We are about to get married, just as our game is about to be released.</p>
+          <p data-i18n="m3">Our own lives gave us the idea: before we found each other, our lives had sunk into darkness too. The light in Æventh stands for the heart of our shared future.</p>
+          <p data-i18n="m4">We build Æventh between Germany and Kazakhstan.</p>
+          <p class="sign">Alexander &amp; Zarina</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="room" id="follow" aria-labelledby="h-follow">
+      <p class="tag"><span class="plate" data-i18n="r7_tag">Exit</span></p>
+      <h2 id="h-follow"><span class="plate" data-i18n="r7_h">Follow the light</span></h2>
+      <div class="follow">
+        <a class="btn" href="https://www.youtube.com/@AEventhStudio" rel="noopener">YouTube</a>
+        <span class="btn" aria-disabled="true">Steam <span class="soon" data-i18n="soon">soon</span></span>
+        <span class="mail">contact@aeventhstudio.com</span>
+        <button class="btn" type="button" id="copy" data-i18n="copy">Copy address</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 AEventh Studio</span>
+    <a href="/impressum/" data-i18n="imprint">Imprint</a>
+    <a href="/datenschutz/" data-i18n="privacy">Privacy</a>
+    <span class="ver">V0.1.0</span>
+  </div>
+</footer>
+
+<div class="hud" role="group" aria-label="Light">
+  <button type="button" id="lights" aria-pressed="false" data-i18n="lights">Lights</button>
+  <button type="button" id="sfx" aria-pressed="false" data-i18n="sound">Sound</button>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  // ---------- language: English default, German switch, choice remembered ----------
+  var DE = {
+    nav_game: "Das Spiel", nav_sound: "Musik", nav_makers: "Wir",
+    eyebrow: "AEventh Studio · PC · in Entwicklung",
+    hook: "Du bist das Licht der Hoffnung.",
+    lede: "Ein Metroidvania ohne Kampf. Als namenloses Lumen gleitest du durch acht Chaos Dungeons, sammelst die gefallenen Lumen und überlebst die Übel, die die Welt verschlungen haben.",
+    wishlist: "Auf die Steam-Wunschliste", soon: "bald", listen: "Soundtrack anhören",
+    hint: "Bewege dein Licht durch die Dunkelheit.",
+    hint_touch: "Wische, um die Dunkelheit zu erhellen.",
+    r1_tag: "Das Spiel", r1_h: "Gleiten. Sammeln. Überleben.",
+    p1_h: "Gleiten", p1_t: "Jeder Zug trägt dich weiter, bis eine Wand dich stoppt. Jeder Raum ist ein Rätsel aus Haltepunkten.",
+    p2_h: "Lumen sammeln", p2_t: "Gefallene Lumen schließen sich dir an, jeder mit einer aktiven und einer passiven Kraft. Finde ihr Material und entwickle sie weiter.",
+    p3_h: "Ausrüsten", p3_t: "Du hast nur wenige Plätze. Tausche deine Lumen, wenn du an einem Lichtkristall rastest, und entscheide, wohin du kommst und wie lange du durchhältst.",
+    p4_h: "Erkunden", p4_t: "Verflochtene Chaos Dungeons voller Geheimgänge, Herzteile und Abkürzungen. Wissen ist Fortschritt.",
+    p5_h: "Überlebenskampf", p5_t: "An den Altären stellst du dich den Übeln selbst. Rufe die Dunkelheit, schnapp dir ihre Essenz und bleib in Bewegung: Hier lädt sich deine Energie nicht auf.",
+    p6_h: "Nie kämpfen", p6_t: "Sünden und Übel streifen durch die Dungeons, und du kannst sie nicht schlagen. Lerne ihre Muster und schlüpf vorbei.",
+    powers: "Kräfte der Lumen, zum Beispiel", pw1: "Richtungswechsel", pw2: "Impuls", pw3: "Bomben", pw4: "Lichtruf",
+    r2_tag: "Die Geschichte", r2_h: "Das Licht der Hoffnung",
+    s1: "Die Übel der Welt sind entfesselt. Ihre Dunkelheit entzieht allem die Energie, bis Felder, Wesen und Maschinen erstarren.",
+    s2: "Ein alter Lumen gab sein Leben und wurde zum Lichtkern. Sein Geist begleitet dich, das namenlose Lumen.",
+    s3: "Die gefallenen Lumen, die lichten Gegenstücke der Übel, warten in den Chaos Dungeons. Finde sie, stell dich dem, was dort lauert, und bring das Licht zurück.",
+    r3_tag: "Der Look", r3_h: "Schwarz, weiß, exakt",
+    r3_p: "Jeder Raum ist auf einem 16-Pixel-Raster gezeichnet und wird nur in ganzen Stufen skaliert. Scharf auf jedem Bildschirm, vom Laptop bis 4K.",
+    spec3: "720p · 1080p · 1440p · 4K", shot_cap: "Prototyp-Raum 002", shot_alt: "Ein Raum aus dem Prototyp: Träger, Kisten und Rohre in Schwarz-Weiß-Pixelgrafik",
+    r4_tag: "Der Klang", r4_h: "Vier Kanäle, mehr nicht",
+    track_meta: "NES-Stil · 2 Puls, Dreieck, Rauschen · 152 BPM · e-Moll · 63 s Loop", composer: "Komponiert von Alexander in FL Studio",
+    r5_tag: "Die Werkstatt", r5_h: "Baue Räume mit unserem eigenen Editor",
+    r5_p: "Æventh Survival Tools ist der Map- und Blockeditor, mit dem wir jeden Raum entwerfen. Er läuft im Browser und auch offline. Später öffnet er sich der Community für eigene Level.",
+    r5_cta: "Survival Tools öffnen",
+    r6_tag: "Die Macher", r6_h: "Zwei Menschen, ein Licht",
+    m1: "Hallo, wir sind Alexander und Zarina.",
+    m2: "Wir stehen vor unserer Hochzeit, so wie unser Spiel vor seiner Veröffentlichung steht.",
+    m3: "Die Idee gab uns unser eigenes Leben: Bevor wir zueinander fanden, war es auch bei uns dunkel. Das Licht in Æventh steht für das Herz unserer gemeinsamen Zukunft.",
+    m4: "Wir bauen Æventh zwischen Deutschland und Kasachstan.",
+    r7_tag: "Ausgang", r7_h: "Folge dem Licht", copy: "Adresse kopieren", copied: "Kopiert",
+    imprint: "Impressum", privacy: "Datenschutz", lights: "Licht", sound: "Ton"
+  };
+  var nodes = document.querySelectorAll("[data-i18n]"), EN = {};
+  nodes.forEach(function (n) { EN[n.getAttribute("data-i18n")] = n.textContent; });
+  EN.hint_touch = "Swipe to light up the dark.";
+  EN.copied = "Copied";
+  EN.shot_alt = document.querySelector("[data-i18n-alt]").alt;
+  var lang = "en", coarse = matchMedia("(pointer: coarse)").matches;
+  // Russian and Kazakh: placeholders until translated; text falls back to English
+  var RU = {}, KK = {};
+  var NOTE = { ru: "[RU: Übersetzung folgt – vorerst Englisch]", kk: "[KZ: Übersetzung folgt – vorerst Englisch]" };
+  function t(k) { var d = lang === "de" ? DE : lang === "ru" ? RU : lang === "kk" ? KK : EN; return d[k] != null ? d[k] : EN[k]; }
+  function apply(l) {
+    lang = l;
+    nodes.forEach(function (n) { var k = n.getAttribute("data-i18n"); if (k === "hint" && coarse) k = "hint_touch"; n.textContent = t(k); });
+    document.querySelector("[data-i18n-alt]").alt = t("shot_alt");
+    document.documentElement.lang = l;
+    var note = document.getElementById("tr-note"); note.hidden = !NOTE[l]; note.firstChild.textContent = NOTE[l] || "";
+    document.querySelectorAll(".lang button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.lang === l)); });
+    try { localStorage.setItem("aeventh_lang", l); } catch (e) {}
+  }
+  var saved = null; try { saved = localStorage.getItem("aeventh_lang"); } catch (e) {}
+  var nav = (navigator.languages || [navigator.language || "en"]).join(",").toLowerCase();
+  apply(saved || (/^de|,de/.test(nav) ? "de" : "en"));
+  document.querySelectorAll(".lang button").forEach(function (b) { b.addEventListener("click", function () { apply(b.dataset.lang); }); });
+
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function img(src) { var i = new Image(); i.src = src; return i; }
+  var TILES = img("assets/img/tiles.png"), LUMEN = img("assets/img/lumen.png"), SHADE = img("assets/img/shade.png");
+  var T = {"girder":[0,0,16,16],"pillar":[18,0,16,16],"vent":[36,0,16,16],"crate":[54,0,16,16],"box":[72,0,16,16],"fan":[90,0,16,16],"pipe":[108,0,16,16],"pipeValve":[126,0,16,16],"crateWide":[144,0,32,16],"hatch":[178,0,32,32],"dimbox":[212,0,16,16],"rod":[230,0,16,32],"machine":[248,0,48,32],"grate":[298,0,32,32],"girderR":[332,0,32,16],"ventR":[366,0,16,16]};
+
+  // ---------- sound ----------
+  var music = document.getElementById("music");
+  var playBtn = document.getElementById("play"), sfxBtn = document.getElementById("sfx");
+  var actx = null, analyser = null, freq = null, soundOn = false;
+  function ensureAudio() {
+    if (actx) { if (actx.state === "suspended") actx.resume(); return; }
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      var src = actx.createMediaElementSource(music); analyser = actx.createAnalyser(); analyser.fftSize = 64;
+      src.connect(analyser); analyser.connect(actx.destination); freq = new Uint8Array(analyser.frequencyBinCount);
+    } catch (e) { actx = null; }
+  }
+  function setSound(on) {
+    soundOn = on; ensureAudio();
+    if (on) { music.volume = .6; var p = music.play(); if (p && p.catch) p.catch(function () {}); } else music.pause();
+    playBtn.setAttribute("aria-pressed", String(on)); playBtn.textContent = on ? "❚❚" : "▶";
+    sfxBtn.setAttribute("aria-pressed", String(on));
+  }
+  playBtn.addEventListener("click", function () { setSound(!soundOn); });
+  sfxBtn.addEventListener("click", function () { setSound(!soundOn); });
+  document.getElementById("listen").addEventListener("click", function () { setSound(true); document.getElementById("sound").scrollIntoView({ behavior: reduce ? "auto" : "smooth" }); });
+  var bars = document.getElementById("bars"), bctx = bars.getContext("2d");
+  function drawBars() {
+    bctx.fillStyle = "#000"; bctx.fillRect(0, 0, 96, 10);
+    for (var i = 0; i < 24; i++) {
+      var v = (analyser && soundOn) ? freq[i + 1] / 255 : 0, h = Math.max(1, Math.round(v * 10));
+      bctx.fillStyle = v > 0 ? "#fff" : "#373737"; bctx.fillRect(i * 4, 10 - h, 3, h);
+    }
+  }
+
+  // ---------- copy ----------
+  var copyBtn = document.getElementById("copy");
+  copyBtn.addEventListener("click", function () {
+    var done = function () { copyBtn.textContent = t("copied"); setTimeout(function () { copyBtn.textContent = t("copy"); }, 1600); };
+    try { navigator.clipboard.writeText("contact@aeventhstudio.com").then(done, function () { selectMail(); }); } catch (e) { selectMail(); }
+  });
+  function selectMail() { var r = document.createRange(); r.selectNodeContents(document.querySelector(".mail")); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+
+  // ---------- the world: a dungeon built from the game's own tiles ----------
+  var cv = document.getElementById("world"), ctx = cv.getContext("2d"), fx = document.getElementById("fx"), fctx = fx.getContext("2d");
+  var S = 3, W = 0, H = 0, GW = 0, GH = 0, worldH = 0, idx = null, out = null, out32 = null, grid = [];
+  var PAR = 0.35, lightsOn = false, glob = 0;
+  var COL_LIT = [0xff000000, 0xff080808, 0xff373737, 0xffffffff];       // ABGR
+  var COL_DIM = [0xff000000, 0xff000000, 0xff050505, 0xff161616];
+  var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  function rng(seed) { return function () { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; }
+
+  function buildWorld() {
+    S = innerWidth < 760 ? 2 : 3;
+    W = Math.ceil(innerWidth / S); H = Math.ceil(innerHeight / S);
+    var maxScroll = Math.max(0, document.documentElement.scrollHeight - innerHeight);
+    worldH = H + Math.ceil(maxScroll * PAR / S) + 32;
+    GW = Math.ceil(W / 16); GH = Math.ceil(worldH / 16);
+    var oc = document.createElement("canvas"); oc.width = GW * 16; oc.height = GH * 16;
+    var o = oc.getContext("2d"), r = rng(7);
+    grid = []; for (var y = 0; y < GH; y++) { grid.push([]); for (var x = 0; x < GW; x++) grid[y].push(0); }
+    for (y = 0; y < GH; y++) for (x = 0; x < GW; x++) { o.fillStyle = ((x + y) & 1) ? "#080808" : "#000"; o.fillRect(x * 16, y * 16, 16, 16); }
+    function put(n, cx, cy) {
+      var tl = T[n], w = tl[2] / 16, h = tl[3] / 16;
+      for (var j = 0; j < h; j++) for (var i = 0; i < w; i++) { if (cy + j >= GH || cx + i >= GW || cy + j < 0 || cx + i < 0 || grid[cy + j][cx + i]) return false; }
+      for (j = 0; j < h; j++) for (i = 0; i < w; i++) grid[cy + j][cx + i] = 1;
+      o.drawImage(TILES, tl[0], tl[1], tl[2], tl[3], cx * 16, cy * 16, tl[2], tl[3]); return true;
+    }
+    var ROOM = 12;
+    for (var top = 0; top < GH; top += ROOM) {
+      var gap = 2 + Math.floor(r() * (GW - 6));
+      for (x = 0; x < GW; x++) { if (top > 0 && (x === gap || x === gap + 1 || x === gap + 2)) continue; put(top === 0 ? (x % 7 === 3 ? "pipeValve" : (x % 3 ? "pipe" : "girder")) : "girder", x, top); }
+      var n = 3 + Math.floor(r() * Math.max(3, GW / 4));
+      var pool = ["crate", "crate", "crate", "crateWide", "box", "dimbox", "vent"];
+      for (var k = 0; k < n * 3 && n > 0; k++) {
+        var nm = pool[Math.floor(r() * pool.length)], cx = 2 + Math.floor(r() * (GW - 4)), cy = top + 2 + Math.floor(r() * (ROOM - 4));
+        if (put(nm, cx, cy)) n--;
+      }
+      put("rod", 2 + Math.floor(r() * (GW - 4)), top + 1);
+      var big = ["machine", "grate", "hatch"][Math.floor(r() * 3)];
+      put(big, 1 + Math.floor(r() * (GW - 5)), top + ROOM - 2);
+    }
+    for (y = 0; y < GH; y++) { grid[y][0] = 0; grid[y][GW - 1] = 0; put(y % 6 === 3 ? "vent" : "pillar", 0, y); put(y % 6 === 0 ? "ventR" : "pillar", GW - 1, y); }
+    var data = o.getImageData(0, 0, oc.width, oc.height).data;
+    idx = new Uint8Array(oc.width * oc.height);
+    for (var p = 0, q = 0; p < idx.length; p++, q += 4) { var v = data[q]; idx[p] = v > 150 ? 3 : v > 30 ? 2 : v > 4 ? 1 : 0; }
+    cv.width = W; cv.height = H; fx.width = W; fx.height = H; out = ctx.createImageData(W, H); out32 = new Uint32Array(out.data.buffer);
+    if (!lumen.set) placeLumen(Math.floor(GW * 0.7), 3);
+  }
+
+  // ---------- light: pointer, finger, or the Lumen sliding on its own ----------
+  var lumen = { cx: 0, cy: 0, x: 0, y: 0, dx: 0, dy: 0, wait: 30, set: false };
+  function placeLumen(cx, cy) { lumen.cx = cx; lumen.cy = cy; lumen.x = cx * 16 + 8; lumen.y = cy * 16 + 8; lumen.dx = lumen.dy = 0; lumen.wait = 20; lumen.set = true; }
+  var ptr = { x: 0, y: 0, last: -1e9, down: false }, smooth = { x: 0, y: 0 };
+  function free(cx, cy, off) {
+    if (cx < 1 || cx >= GW - 1 || cy < 0 || cy >= GH) return false;
+    var sy = cy * 16 - off; if (sy < 8 || sy > H - 24) return false;   // stay on screen
+    return !grid[cy][cx];
+  }
+  function stepLumen(off) {
+    if (!free(lumen.cx, lumen.cy, off)) {      // scrolled away: hop to a free cell near the screen centre
+      var cy0 = Math.floor((off + H / 2) / 16);
+      for (var d = 0; d < 40; d++) { var cx = Math.floor(GW / 2) + ((d % 2) ? d : -d) % (GW / 2 | 0); if (free(cx, cy0, off)) { placeLumen(cx, cy0); break; } }
+      return;
+    }
+    if (lumen.wait > 0) {
+      if (--lumen.wait === 0) {
+        var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(function (q) { return free(lumen.cx + q[0], lumen.cy + q[1], off) && !(q[0] === -lumen.dx && q[1] === -lumen.dy); });
+        if (!dirs.length) dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(function (q) { return free(lumen.cx + q[0], lumen.cy + q[1], off); });
+        if (!dirs.length) { lumen.wait = 30; return; }
+        var q = dirs[Math.floor(Math.random() * dirs.length)]; lumen.dx = q[0]; lumen.dy = q[1];
+      }
+      return;
+    }
+    var tx = (lumen.cx + lumen.dx) * 16 + 8, ty = (lumen.cy + lumen.dy) * 16 + 8, sp = 4.5;
+    lumen.x += Math.sign(tx - lumen.x) * Math.min(sp, Math.abs(tx - lumen.x));
+    lumen.y += Math.sign(ty - lumen.y) * Math.min(sp, Math.abs(ty - lumen.y));
+    if (lumen.x === tx && lumen.y === ty) {
+      lumen.cx += lumen.dx; lumen.cy += lumen.dy;
+      if (!free(lumen.cx + lumen.dx, lumen.cy + lumen.dy, off)) { lumen.wait = 22 + Math.floor(Math.random() * 20); }
+    }
+  }
+  addEventListener("pointermove", function (e) { ptr.x = e.clientX; ptr.y = e.clientY; if (e.pointerType === "mouse" || ptr.down) ptr.last = performance.now(); }, { passive: true });
+  addEventListener("pointerdown", function (e) { ptr.down = true; ptr.x = e.clientX; ptr.y = e.clientY; ptr.last = performance.now(); ensureAudio(); }, { passive: true });
+  addEventListener("pointerup", function () { ptr.down = false; }, { passive: true });
+  addEventListener("pointercancel", function () { ptr.down = false; }, { passive: true });
+  document.addEventListener("mouseleave", function () { ptr.last = -1e9; });
+
+  document.getElementById("lights").addEventListener("click", function () { lightsOn = !lightsOn; this.setAttribute("aria-pressed", String(lightsOn)); });
+
+  // ---------- render ----------
+  var frame = 0, last = 0;
+  function render(now) {
+    requestAnimationFrame(render);
+    if (now - last < 33) return; last = now; frame++;
+    if (!idx) return;
+    var off = Math.min(Math.max(0, worldH - H), Math.floor(scrollY * PAR / S));
+    var usePtr = ptr.down || (now - ptr.last < 4000);
+    var lx, ly;
+    if (usePtr) {
+      smooth.x += (ptr.x / S - smooth.x) * .45; smooth.y += (ptr.y / S - smooth.y) * .45; lx = smooth.x; ly = smooth.y;
+      var cx = Math.floor(lx / 16), cy = Math.floor((ly + off) / 16);
+      if (cx > 0 && cx < GW - 1 && cy >= 0 && cy < GH && !grid[cy][cx]) placeLumen(cx, cy);
+    } else {
+      if (!reduce) stepLumen(off);
+      lx = lumen.x; ly = lumen.y - off; smooth.x = lx; smooth.y = ly;
+    }
+    glob += (((lightsOn) ? 1 : 0) - glob) * .08;
+    var R = (coarse ? 64 : 76) + Math.sin(now / 420) * 2.5, gl = glob;
+    var ww = GW * 16;
+    for (var y = 0; y < H; y++) {
+      var row = (y + off) * ww, by = (y & 3) * 4, dy = y - ly, dy2 = dy * dy;
+      for (var x = 0; x < W; x++) {
+        var v = idx[row + x], dx = x - lx, l = 1 - Math.sqrt(dx * dx + dy2) / R;
+        if (gl > l) l = gl;
+        out32[y * W + x] = (l > (BAYER[by + (x & 3)] + .5) / 16) ? COL_LIT[v] : COL_DIM[v];
+      }
+    }
+    ctx.putImageData(out, 0, 0);
+    // the Lumen core sits above the content
+    fctx.clearRect(0, 0, W, H);
+    // the Lumen core
+    if (LUMEN.complete && LUMEN.naturalWidth) fctx.drawImage(LUMEN, ((frame >> 2) % 7) * 16, 0, 16, 16, Math.round(lx) - 8, Math.round(ly) - 8, 16, 16);
+    if (analyser && soundOn) analyser.getByteFrequencyData(freq);
+    drawBars(); demos(now);
+  }
+
+  // ---------- small live demos inside the rule cards ----------
+  var demoEls = Array.prototype.slice.call(document.querySelectorAll("[data-demo]"));
+  function demos(now) {
+    demoEls.forEach(function (c) {
+      var g = c.getContext("2d"), kind = c.dataset.demo, f = Math.floor(now / 120);
+      g.clearRect(0, 0, 96, 48);
+      for (var y = 0; y < 3; y++) for (var x = 0; x < 6; x++) { g.fillStyle = ((x + y) & 1) ? "#080808" : "#000"; g.fillRect(x * 16, y * 16, 16, 16); }
+      if (!TILES.complete) return;
+      function tile(n, x, y) { var tl = T[n]; g.drawImage(TILES, tl[0], tl[1], tl[2], tl[3], x, y, tl[2], tl[3]); }
+      if (kind === "slide") {
+        tile("crate", 0, 16); tile("crate", 80, 16);
+        var p = (now / 900) % 2, xx = p < 1 ? 16 + Math.min(1, p * 2.2) * 48 : 64 - Math.min(1, (p - 1) * 2.2) * 48;
+        g.fillStyle = "#373737"; for (var i = 16; i < 80; i += 4) g.fillRect(i, 24, 2, 1);
+        g.drawImage(LUMEN, (f % 7) * 16, 0, 16, 16, Math.round(xx), 16, 16, 16);
+      } else if (kind === "explore") {
+        tile("vent", 0, 0); tile("pipe", 16, 0); tile("pipeValve", 32, 0); tile("pipe", 48, 0); tile("fan", 80, 0); tile("hatch", 56, 16); tile("box", 16, 32);
+        var on = Math.floor(now / 700) % 2; g.fillStyle = on ? "#fff" : "#373737"; g.fillRect(32, 22, 2, 2); g.fillRect(36, 22, 2, 2); g.fillRect(40, 22, 2, 2);
+      } else if (kind === "slots") {
+        var on2 = Math.floor(now / 1100) % 3;
+        [10, 38, 66].forEach(function (x, i) {
+          g.fillStyle = "#fff"; g.fillRect(x, 12, 20, 2); g.fillRect(x, 32, 20, 2); g.fillRect(x, 12, 2, 22); g.fillRect(x + 18, 12, 2, 22);
+          if (i !== on2) g.drawImage(LUMEN, ((f + i * 3) % 7) * 16, 0, 16, 16, x + 2, 15, 16, 16);
+          else if ((f >> 1) % 2) { g.fillStyle = "#373737"; g.fillRect(x + 8, 21, 4, 4); }
+        });
+      } else if (kind === "survive") {
+        tile("box", 40, 16);
+        var tt = now / 1000, k2 = Math.floor(tt / 1.4), px2 = [8, 72, 24, 56][k2 % 4], py2 = [4, 28, 30, 6][k2 % 4];
+        if ((f % 4) < 3) { g.fillStyle = "#fff"; g.fillRect(px2 + 6, py2 + 6, 4, 4); g.fillStyle = "#373737"; g.fillRect(px2 + 4, py2 + 7, 8, 2); g.fillRect(px2 + 7, py2 + 4, 2, 8); }
+        var ph = (tt % 1.4) / 1.4, prev = [56, 8, 72, 24][k2 % 4], prevy = [6, 4, 28, 30][k2 % 4];
+        var lx2 = ph < .5 ? prev : px2, ly2 = ph < .5 ? prevy + (py2 - prevy) * Math.min(1, (ph) * 4) : py2;
+        if (ph >= .5) lx2 = prev + (px2 - prev) * Math.min(1, (ph - .5) * 4);
+        g.drawImage(LUMEN, (f % 7) * 16, 0, 16, 16, Math.round(lx2), Math.round(ly2), 16, 16);
+      } else if (kind === "lumen") {
+        [16, 40, 64].forEach(function (x, i) { g.globalAlpha = i === (Math.floor(now / 800) % 3) ? 1 : .35; g.drawImage(LUMEN, ((f + i * 2) % 7) * 16, 0, 16, 16, x, 16, 16, 16); });
+        g.globalAlpha = 1;
+      } else {
+        tile("girderR", 0, 0); tile("girderR", 64, 0);
+        var sx = 16 + Math.round((Math.sin(now / 600) + 1) * 28);
+        g.drawImage(SHADE, (f % 7) * 16, 0, 16, 16, sx, 16, 16, 16);
+        g.drawImage(LUMEN, (f % 7) * 16, 0, 16, 16, 40, 32, 16, 16);
+      }
+    });
+  }
+
+  // ---------- start ----------
+  if (coarse) { var h = document.getElementById("hint"); h.textContent = t("hint_touch"); }
+  function start() { buildWorld(); requestAnimationFrame(render); }
+  var rt = 0;
+  addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(buildWorld, 200); });
+  if (TILES.complete) start(); else TILES.onload = start;
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { setTimeout(buildWorld, 50); });
+})();
+</script>
+</body>
+</html>

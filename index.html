@@ -4,100 +4,121 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AEventh Studio</title>
-<meta name="description" content="AEventh Studio is an independent game studio. Currently developing Æventh: Survival.">
+<meta name="description" content="AEventh Studio makes pixel games about light in the dark. Now in development: Æventh: Survival.">
+<meta property="og:title" content="AEventh Studio">
+<meta property="og:description" content="Pixel games about light in the dark. Now in development: Æventh: Survival.">
+<meta property="og:image" content="https://aeventhstudio.com/assets/img/room_002.png">
 <link rel="icon" type="image/png" href="/assets/aeventh_mark_v2.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@500;700&family=Silkscreen&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
 <style>
-:root {
-  --void: #050505; --line: #2b2b2b; --dim: #8f8f8a; --light: #f4f4ef;
-  --font-display: "Pixelify Sans", "Silkscreen", ui-monospace, monospace;
-  --font-label: "Silkscreen", ui-monospace, "SFMono-Regular", monospace;
-  --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
-  color-scheme: dark;
-}
-* { box-sizing: border-box; }
-html, body { background: var(--void); }
-body { margin: 0; color: var(--light); font: 17px/1.6 var(--font-body);
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-a { color: var(--light); text-underline-offset: 3px; }
-a:focus-visible, button:focus-visible { outline: 2px solid var(--light); outline-offset: 3px; }
-.wrap { max-width: 1040px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
-.top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-block: 18px; border-bottom: 1px solid var(--line); }
-.studio { display: flex; align-items: center; gap: 10px; font: 13px var(--font-label); letter-spacing: .06em; text-decoration: none; }
-.studio img { width: 32px; height: 32px; }
-.lang { display: flex; border: 1px solid var(--line); margin-left: auto; }
-.lang button { all: unset; cursor: pointer; padding: 4px 8px; font: 12px var(--font-label); color: var(--dim); }
-.lang button[aria-pressed="true"] { background: var(--light); color: var(--void); }
-main { flex: 1; padding-block: 64px 48px; display: grid; gap: 56px; align-content: start; }
-.hero img { width: 96px; height: 96px; }
-h1 { font: 700 clamp(40px, 8vw, 80px)/1 var(--font-display); margin: 20px 0 16px; }
-.lede { font-size: clamp(18px, 2.2vw, 21px); max-width: 40ch; margin: 0; color: var(--light); }
-.label { font: 12px var(--font-label); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 14px; }
-.game { border: 2px solid var(--light); padding: 22px; display: grid; gap: 10px; max-width: 560px; }
-.game h2 { font: 700 28px/1.1 var(--font-display); margin: 0; }
+.hero { min-height: min(78vh, 760px); display: grid; align-content: center; gap: 22px; padding-block: 40px 72px; }
+.hero .mark { width: clamp(96px, 14vw, 150px); height: auto; }
+.hero h1 { font-size: clamp(64px, 12vw, 150px); line-height: .85; }
+.hero h1 .plate { padding: 0 .12em; }
+.hook { font: 400 clamp(26px, 3.4vw, 38px)/1.15 var(--display); margin: 0; max-width: 36ch; }
+.lede { max-width: 56ch; margin: 0; }
+.lede .plate { line-height: 1.9; }
+.games { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; }
+.game { background: var(--void); border: 3px solid var(--light); display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+.game img { display: block; width: 100%; image-rendering: pixelated; border-bottom: 3px solid var(--light); }
+.game .body { padding: 20px; display: grid; gap: 10px; align-content: start; }
+.game h3 { font-size: 40px; line-height: 1; }
 .game p { margin: 0; color: var(--dim); }
-.chip { font: 11px var(--font-label); letter-spacing: .08em; border: 1px solid var(--light); padding: 2px 8px; justify-self: start; }
-.links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
-.btn { font: 12px var(--font-label); letter-spacing: .06em; padding: 10px 14px; border: 2px solid var(--light); text-decoration: none; }
-.mail { user-select: all; }
-footer { border-top: 1px solid var(--line); padding-block: 24px 36px; display: flex; gap: 12px 24px; flex-wrap: wrap; font: 12px var(--font-label); color: var(--dim); }
-footer .ver { margin-left: auto; border: 1px solid var(--line); padding: 2px 8px; color: var(--light); }
-@media (max-width: 600px) { footer .ver { margin-left: 0; } }
+.chip { font: 11px var(--label); letter-spacing: .08em; border: 1px solid var(--light); padding: 2px 8px; justify-self: start; text-transform: uppercase; }
+.next { border-color: var(--steel); }
+.next .void { aspect-ratio: 16 / 9; background: repeating-conic-gradient(#0b0b0b 0 25%, #000 0 50%) 0 0 / 24px 24px; border-bottom: 3px solid var(--steel); display: grid; place-items: center; font: 400 64px var(--display); color: var(--steel); }
+.next h3 { color: var(--dim); }
+.us p { max-width: 60ch; margin: 0 0 12px; }
+.us p .plate { line-height: 1.85; }
+.follow { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+@media (max-width: 760px) { .games { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
+<canvas id="dark" aria-hidden="true"></canvas>
 <div class="wrap">
   <header class="top">
-    <a class="studio" href="/"><img alt="" src="/assets/aeventh_mark_v2.png">AEventh Studio</a>
-    <div class="lang" role="group" aria-label="Language">
-      <button type="button" data-lang="en" aria-pressed="true">EN</button>
-      <button type="button" data-lang="de" aria-pressed="false">DE</button>
-    </div>
+    <a class="studio" href="/"><img src="/assets/aeventh_mark_v2.png" alt="">AEventh Studio</a>
+    <nav aria-label="Main">
+      <a href="#games" data-i18n="nav_games">Games</a>
+      <a href="#us" data-i18n="nav_us">About us</a>
+      <a href="#contact" data-i18n="nav_contact">Contact</a>
+      <span class="lang" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="de" aria-pressed="false">DE</button><button type="button" data-lang="ru" aria-pressed="false" lang="ru">RU</button><button type="button" data-lang="kk" aria-pressed="false" lang="kk">KZ</button></span>
+    </nav>
   </header>
+
   <main>
-    <div class="hero">
-      <img alt="AEventh Studio logo" src="/assets/aeventh_mark_v2.png">
-      <h1>AEventh Studio</h1>
-      <p class="lede" data-i18n="lede">An independent game studio. We make quiet, precise games in black and white.</p>
-    </div>
-    <section aria-labelledby="h-games">
-      <p class="label" id="h-games" data-i18n="games">Games</p>
-      <article class="game">
-        <span class="chip" data-i18n="status">In development</span>
-        <h2>Æventh: Survival</h2>
-        <p data-i18n="survival">A grid-based Metroidvania without combat. You slide until something stops you.</p>
-        <div class="links"><a class="btn" href="/survival/tools/">Survival Tools</a></div>
-      </article>
+    <section class="hero" aria-labelledby="t">
+      <p class="tag" id="tr-note" hidden><span class="plate ph"></span></p>
+      <img class="mark" src="/assets/aeventh_mark_v2.png" alt="AEventh Studio logo">
+      <h1 id="t"><span class="plate">AEventh Studio</span></h1>
+      <p class="hook"><span class="plate" data-i18n="hook">Games about the light in the dark.</span></p>
+      <p class="lede"><span class="plate" data-i18n="lede">We are a small independent studio from Germany and Kazakhstan. We make pixel games with few colours, exact rules and a lot of heart.</span></p>
     </section>
-    <section>
-      <p class="label" data-i18n="contact">Contact</p>
-      <p style="margin:0"><span class="mail">contact@aeventhstudio.com</span></p>
+
+    <section class="room" id="games" aria-labelledby="h-games">
+      <p class="tag"><span class="plate" data-i18n="games_tag">Our games</span></p>
+      <h2 id="h-games"><span class="plate" data-i18n="games_h">Now in the making</span></h2>
+      <div class="games">
+        <article class="game">
+          <a href="/survival/"><img src="/assets/img/room_002.png" width="320" height="180" alt="Æventh: Survival – a room from the prototype"></a>
+          <div class="body">
+            <span class="chip" data-i18n="status">PC · in development</span>
+            <h3>Æventh: Survival</h3>
+            <p data-i18n="survival">You are the light of hope. A Metroidvania without combat: slide through the Chaos Dungeons, gather the fallen Lumen and survive the evils that swallowed the world.</p>
+            <div class="ctas"><a class="btn primary" href="/survival/" data-i18n="discover">Discover the game</a><a class="btn" href="/survival/tools/">Survival Tools</a></div>
+          </div>
+        </article>
+        <article class="game next" aria-label="Next game">
+          <div class="void" aria-hidden="true">?</div>
+          <div class="body">
+            <span class="chip" data-i18n="next_chip">Later</span>
+            <h3 data-i18n="next_h">Still in the dark</h3>
+            <p data-i18n="next_p">Our next game is waiting for its light. You'll see it here first.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="room us" id="us" aria-labelledby="h-us">
+      <p class="tag"><span class="plate" data-i18n="us_tag">About us</span></p>
+      <h2 id="h-us"><span class="plate" data-i18n="us_h">Alexander &amp; Zarina</span></h2>
+      <p><span class="plate" data-i18n="us1">We are about to get married, just as our first game is about to be released.</span></p>
+      <p><span class="plate" data-i18n="us2">Before we found each other, our lives had sunk into darkness too. That is why our games are about light: for us it stands for the heart of our shared future.</span></p>
+    </section>
+
+    <section class="room" id="contact" aria-labelledby="h-contact">
+      <p class="tag"><span class="plate" data-i18n="c_tag">Contact</span></p>
+      <h2 id="h-contact"><span class="plate" data-i18n="c_h">Say hello</span></h2>
+      <div class="follow">
+        <span class="mail">contact@aeventhstudio.com</span>
+        <a class="btn" href="https://www.youtube.com/@AEventhStudio" rel="noopener">YouTube</a>
+      </div>
     </section>
   </main>
-  <footer>
-    <span>© 2026 AEventh Studio</span>
-    <span data-i18n="imprint">Imprint follows</span>
-    <span class="ver">V0.1.0</span>
-  </footer>
 </div>
+<footer>
+  <div class="wrap">
+    <span>© 2026 AEventh Studio</span>
+    <a href="/impressum/" data-i18n="imprint">Imprint</a>
+    <a href="/datenschutz/" data-i18n="privacy">Privacy</a>
+    <span class="ver">V0.1.0</span>
+  </div>
+</footer>
 <script>
-(function () {
-  var DE = { lede: "Ein unabhängiges Spielestudio. Wir machen ruhige, präzise Spiele in Schwarz und Weiß.", games: "Spiele", status: "In Entwicklung",
-    survival: "Ein rasterbasiertes Metroidvania ohne Kampf. Du gleitest, bis dich etwas aufhält.", contact: "Kontakt", imprint: "Impressum folgt" };
-  var nodes = document.querySelectorAll("[data-i18n]"), EN = {};
-  nodes.forEach(function (n) { EN[n.getAttribute("data-i18n")] = n.textContent; });
-  function apply(l) { var d = l === "de" ? DE : EN;
-    nodes.forEach(function (n) { var k = n.getAttribute("data-i18n"); if (d[k]) n.textContent = d[k]; });
-    document.documentElement.lang = l;
-    document.querySelectorAll(".lang button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.lang === l)); });
-    try { localStorage.setItem("aeventh_lang", l); } catch (e) {} }
-  var s = null; try { s = localStorage.getItem("aeventh_lang"); } catch (e) {}
-  var nav = (navigator.languages || [navigator.language || "en"]).join(",").toLowerCase();
-  apply(s || (/^de|,de/.test(nav) ? "de" : "en"));
-  document.querySelectorAll(".lang button").forEach(function (b) { b.addEventListener("click", function () { apply(b.dataset.lang); }); });
-})();
+window.AE_DE = {
+  nav_games: "Spiele", nav_us: "Über uns", nav_contact: "Kontakt",
+  hook: "Spiele über das Licht in der Dunkelheit.",
+  lede: "Wir sind ein kleines unabhängiges Studio aus Deutschland und Kasachstan. Wir machen Pixelspiele mit wenigen Farben, klaren Regeln und viel Herz.",
+  games_tag: "Unsere Spiele", games_h: "Gerade in Arbeit", status: "PC · in Entwicklung",
+  survival: "Du bist das Licht der Hoffnung. Ein Metroidvania ohne Kampf: Gleite durch die Chaos Dungeons, sammle die gefallenen Lumen und überlebe die Übel, die die Welt verschlungen haben.",
+  discover: "Zum Spiel", next_chip: "Später", next_h: "Noch im Dunkeln", next_p: "Unser nächstes Spiel wartet noch auf sein Licht. Hier seht ihr es zuerst.",
+  us_tag: "Über uns", us_h: "Alexander & Zarina",
+  us1: "Wir stehen vor unserer Hochzeit, so wie unser erstes Spiel vor seiner Veröffentlichung steht.",
+  us2: "Bevor wir zueinander fanden, war es auch in unserem Leben dunkel. Deshalb handeln unsere Spiele vom Licht: Es steht für das Herz unserer gemeinsamen Zukunft.",
+  c_tag: "Kontakt", c_h: "Schreib uns", imprint: "Impressum", privacy: "Datenschutz"
+};
 </script>
+<script src="/assets/site.js"></script>
 </body>
 </html>
