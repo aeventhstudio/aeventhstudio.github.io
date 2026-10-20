@@ -523,23 +523,30 @@ footer .ver { margin-left: auto; border: 1px solid var(--steel); padding: 1px 8p
     var sy = cy * 16 - off; if (sy < 30 || sy > H - 40) return false;   // stay visible between the two bars
     return !grid[cy][cx];
   }
-  function stepLumen(off) {
-    if (!free(lumen.cx, lumen.cy, off)) {
-      var cy0 = Math.floor((off + H / 2) / 16), half = Math.max(1, GW >> 1);
-      for (var d = 0; d < 40; d++) { var cx = half + (((d % 2) ? d : -d) % half); if (free(cx, cy0, off)) { placeLumen(cx, cy0); break; } }
-      return;
+  // put the Lumen on a free cell near the middle of the screen (after scrolling, or when it is boxed in)
+  function relocate(off) {
+    var cy0 = Math.floor((off + H / 2) / 16), start = Math.floor(Math.random() * GW);
+    for (var k = 0; k < 24; k++) {
+      var cy = cy0 + ((k % 2) ? (k + 1) >> 1 : -(k >> 1));
+      for (var i = 0; i < GW; i++) {
+        var cx = (start + i) % GW;
+        if (free(cx, cy, off) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(function (q) { return free(cx + q[0], cy + q[1], off); })) { placeLumen(cx, cy); return; }
+      }
     }
+  }
+  function stepLumen(off) {
+    if (!free(lumen.cx, lumen.cy, off)) { relocate(off); return; }
     if (lumen.wait > 0) {
       if (--lumen.wait === 0) {
         var all = [[1, 0], [-1, 0], [0, 1], [0, -1]];
         var dirs = all.filter(function (q) { return free(lumen.cx + q[0], lumen.cy + q[1], off) && !(q[0] === -lumen.dx && q[1] === -lumen.dy); });
         if (!dirs.length) dirs = all.filter(function (q) { return free(lumen.cx + q[0], lumen.cy + q[1], off); });
-        if (!dirs.length) { lumen.wait = 30; return; }
+        if (!dirs.length) { relocate(off); return; }
         var q = dirs[Math.floor(Math.random() * dirs.length)]; lumen.dx = q[0]; lumen.dy = q[1];
       }
       return;
     }
-    var tx = (lumen.cx + lumen.dx) * 16 + 8, ty = (lumen.cy + lumen.dy) * 16 + 8, sp = 4.5;
+    var tx = (lumen.cx + lumen.dx) * 16 + 8, ty = (lumen.cy + lumen.dy) * 16 + 8, sp = reduce ? 2 : 4.5;   // "reduce motion": slower, but still alive
     lumen.x += Math.sign(tx - lumen.x) * Math.min(sp, Math.abs(tx - lumen.x));
     lumen.y += Math.sign(ty - lumen.y) * Math.min(sp, Math.abs(ty - lumen.y));
     if (lumen.x === tx && lumen.y === ty) {
@@ -567,7 +574,7 @@ footer .ver { margin-left: auto; border: 1px solid var(--steel); padding: 1px 8p
       var cx = Math.floor(lx / 16), cy = Math.floor((ly + off) / 16);
       if (cx > 0 && cx < GW - 1 && cy >= 0 && cy < GH && !grid[cy][cx]) placeLumen(cx, cy);
     } else {
-      if (!reduce) stepLumen(off);
+      stepLumen(off);
       lx = lumen.x; ly = lumen.y - off; smooth.x = lx; smooth.y = ly;
     }
     glob += ((lightsOn ? 1 : 0) - glob) * .08;

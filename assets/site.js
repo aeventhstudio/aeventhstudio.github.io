@@ -48,7 +48,7 @@
     requestAnimationFrame(frame); if (now - last < 40) return; last = now;
     var lx, ly;
     if (now - ptr.last < 4000) { lx = ptr.x / S; ly = ptr.y / S; auto.x = lx; auto.y = ly; }
-    else { if (!reduce) { auto.x += auto.vx; auto.y += auto.vy; if (auto.x < 20 || auto.x > W - 20) auto.vx *= -1; if (auto.y < 20 || auto.y > H - 20) auto.vy *= -1; } lx = auto.x; ly = auto.y; }
+    else { { var sp = reduce ? .5 : 1; auto.x += auto.vx * sp; auto.y += auto.vy * sp; if (auto.x < 20 || auto.x > W - 20) auto.vx *= -1; if (auto.y < 20 || auto.y > H - 20) auto.vy *= -1; } lx = auto.x; ly = auto.y; }
     glob += ((lightsOn ? 1 : 0) - glob) * .08;
     var R = 70 + Math.sin(now / 420) * 2, off = Math.floor(scrollY * .3 / S), gl = glob;
     for (var y = 0; y < H; y++) {
